@@ -1,0 +1,31 @@
+services:
+
+  mongo-database:
+    volumes:
+      - mongodata:/data/db
+    ports:
+      - "27017:27017"
+
+  zookeeper:
+    image: "bitnami/zookeeper:latest"
+    expose:
+      - "2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: "bitnami/kafka:latest"
+    ports:
+      - "7777:7777"
+      - "27777:27777"
+    depends_on:
+      - zookeeper
+
+  karapace-registry:
+    ports:
+      - "7878:7878"
+
+volumes:
+  mongodata:
+    name: mongodata
+    external: true

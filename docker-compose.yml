@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+
+  zookeeper:
+    image: "bitnami/zookeeper:latest"
+    expose:
+      - "2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: "bitnami/kafka:latest"
+    expose:
+      - "7777"
+      - "27777"
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:7777,EXTERNAL://:27777
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:7777,EXTERNAL://localhost:27777
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_OFFSETS_REPLICATION_FACTOR=1
+      - KAFKA_CFG_CONFLUENT_SCHEMA_REGISTRY_URL=http://karapace-registry:7878
+
+  karapace-registry:
+    image: aivenoy/karapace:latest
+    entrypoint:
+      - /bin/bash
+      - /opt/karapace/start.sh
+      - registry
+    depends_on:
+      - kafka
+      - mongo-database
+    expose:
+      - "7878"
+    environment:
+      KARAPACE_ADVERTISED_HOSTNAME: karapace-registry
+      KARAPACE_BOOTSTRAP_URI: kafka:7777
+      KARAPACE_PORT: 7878
+      KARAPACE_HOST: 0.0.0.0
+      KARAPACE_CLIENT_ID: karapace
+      KARAPACE_GROUP_ID: karapace-registry
+      KARAPACE_MASTER_ELIGIBITY: "true"
+      KARAPACE_TOPIC_NAME: _schemas
+      KARAPACE_LOG_LEVEL: WARNING
+      KARAPACE_COMPATIBILITY: FULL
+
+  mongo-database:
+    image: mongo:4.2.19
+    working_dir: /jsfiles
+    expose:
+      - "27017"

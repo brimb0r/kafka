@@ -1,0 +1,8 @@
+environment: local
+schedule: "*/1 * * * *"
+serviceName: "dogs"
+mongo:
+  dbName: dogs
+  username:
+  password:
+  uri: mongodb://localhost:27017
